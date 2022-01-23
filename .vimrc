@@ -2,6 +2,10 @@
 set nocompatible              " required
 filetype off                  " required
 
+let g:ycm_clangd_binary_path = trim(system('brew --prefix llvm')).'/bin/clangd'
+
+set backspace=indent,eol,start
+
 " set the runtime path to include Vundle and initialize
 set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
@@ -30,11 +34,20 @@ Plugin 'jnurmine/Zenburn'
 Plugin 'altercation/vim-colors-solarized'
 Plugin 'scrooloose/nerdtree'
 Plugin 'kien/ctrlp.vim'
-Plugin 'tpope/vim-fugitive'
+Plugin 'tpope/vim-pathogen'
+" Plugin 'tpope/vim-fugitive'
 Plugin 'christoomey/vim-tmux-navigator'
 Plugin 'fatih/vim-go'
+Plugin 'vim-python/python-syntax'
 Bundle 'Valloric/YouCompleteMe'
 
+Plugin 'git://git.wincent.com/command-t.git'
+" git repos on your local machine (i.e. when working on your own plugin)
+"Plugin 'file:///home/gmarik/path/to/plugin'
+
+" The sparkup vim script is in a subdirectory of this repo called vim.
+" Pass the path to set the runtimepath properly.
+Plugin 'rstacruz/sparkup', {'rtp': 'vim/'}
 
 set encoding=utf-8
 
@@ -63,7 +76,7 @@ au BufNewFile, BufRead *.py
     \ set tabstop=2
     \ set softtabstop=2
     \ set shiftwidth=2
-    \ set textwidth=79
+    \ set textwidth=80
     \ set expandtab
     \ set autoindent
     \ set fileformat=unix
@@ -93,11 +106,16 @@ if 'VIRTUAL_ENV' in os.environ:
 EOF
 
 " vim color scheme
+syntax enable 
+colorscheme solarized
 if has('gui_running')
-  set background=dark
-  colorscheme solarized
+ set background=light
 else
-  colorscheme zenburn
+  set background=dark
 endif
-" call togglebg#map("<F5>")
 
+
+
+let g:solarized_termcolors=256
+
+" call togglebg#map("<F5>")
