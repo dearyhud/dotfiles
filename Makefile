@@ -12,7 +12,7 @@
 #    make docker        — Install Docker Desktop
 #    make iterm2        — Install iTerm2
 #    make vim-plug      — Install vim-plug + vim plugins
-#    make tpm           — Install tmux plugin manager + tmux-powerline
+#    make tpm           — Install tpm + tmux-powerline + apply custom theme/config
 #    make fonts         — Install all Nerd Fonts
 #    make colors        — Install rose-pine palettes for iTerm2
 # ============================================================
@@ -165,5 +165,10 @@ tpm:
 	else \
 	  echo "  tmux-powerline already installed, skipping."; \
 	fi
-	@echo "→ tpm + tmux-powerline installed."
+	@echo "→ Applying tmux-powerline customizations..."
+	cp $(DOTFILES_DIR)/tmux-powerline/themes/default.sh \
+	   $(HOME_DIR)/.tmux/plugins/tmux-powerline/themes/default.sh
+	cp $(DOTFILES_DIR)/tmux-powerline/lib/headers.sh \
+	   $(HOME_DIR)/.tmux/plugins/tmux-powerline/lib/headers.sh
+	@echo "→ tpm + tmux-powerline installed and configured."
 	@echo "  Inside tmux press Ctrl-f I to activate all plugins."

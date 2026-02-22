@@ -8,6 +8,8 @@ Personal dotfiles — bootstraps a local development environment via `make`.
 |------|-------------|
 | `.vimrc` | Vim config — FZF IDE-style setup, NERDTree, rose-pine moon colorscheme |
 | `.tmux.conf` | tmux config — custom prefix (`C-f`), vim-aware pane navigation, tpm |
+| `tmux-powerline/themes/default.sh` | Custom powerline theme — `vcs_branch` left, `now_playing` right, rose-pine mauve git icon |
+| `tmux-powerline/lib/headers.sh` | Patched headers — disables unused `cpu_temp` and `mem_used` helpers |
 | `Makefile` | Bootstrap automation |
 
 ## Quick start (fresh machine)
