@@ -2,50 +2,54 @@
 #  dotfiles — Bootstrap Makefile
 #
 #  Usage:
-#    make setup         — Install all apps, fonts, colors, plugins, symlinks
+#    make setup         — Full bootstrap (homebrew first, then everything)
 #    make install       — Symlinks + plugins (assumes deps already present)
 #    make link          — Symlink dotfiles only
 #    make unlink        — Remove symlinks
-#    make brew          — Install Homebrew dependencies (incl. vim, tmux)
-#    make vim-plug      — Install vim-plug + vim plugins
-#    make tpm           — Install tmux plugin manager (tpm)
-#    make fonts         — Install all Nerd Fonts
-#    make colors        — Install rose-pine palettes (iterm2 + terminal)
+#    make homebrew      — Install Homebrew itself (run this first on fresh machine)
+#    make brew          — Install Homebrew CLI packages (vim, tmux, etc.)
+#    make rvm           — Install RVM + latest stable Ruby
+#    make docker        — Install Docker Desktop
 #    make iterm2        — Install iTerm2
+#    make vim-plug      — Install vim-plug + vim plugins
+#    make tpm           — Install tmux plugin manager + tmux-powerline
+#    make fonts         — Install all Nerd Fonts
+#    make colors        — Install rose-pine palettes for iTerm2
 # ============================================================
 
 DOTFILES_DIR := $(shell pwd)
 HOME_DIR     := $(HOME)
 
-# CLI tools & apps
-BREW_PACKAGES  := vim tmux fzf ripgrep bat fd reattach-to-user-namespace
-BREW_CASKS     := iterm2
+# CLI tools
+BREW_PACKAGES := vim tmux fzf ripgrep bat fd reattach-to-user-namespace
 
-# Nerd Fonts (all variants in the JetBrainsMono family + extras)
+# Nerd Fonts
 NERD_FONT_CASKS := \
   font-jetbrains-mono-nerd-font \
   font-fira-code-nerd-font \
   font-hack-nerd-font \
   font-meslo-lg-nerd-font
 
-# Rose Pine iTerm2 color preset source
-ROSE_PINE_ITERM_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine.itermcolors
-ROSE_PINE_MOON_URL   := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-moon.itermcolors
-ROSE_PINE_DAWN_URL   := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-dawn.itermcolors
-COLORS_DIR           := $(HOME_DIR)/Library/Application\ Support/iTerm2/ColorPresets
+# Rose Pine iTerm2 color presets
+ROSE_PINE_ITERM_URL := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine.itermcolors
+ROSE_PINE_MOON_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-moon.itermcolors
+ROSE_PINE_DAWN_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-dawn.itermcolors
+COLORS_DIR          := $(HOME_DIR)/Library/Application\ Support/iTerm2/ColorPresets
 
-.PHONY: setup install link unlink brew vim-plug tpm fonts colors iterm2
+.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors
 
 # ─── Full machine bootstrap ──────────────────────────────────
-setup: brew iterm2 fonts colors vim-plug tpm link
+# homebrew must run first — everything else depends on it
+setup: homebrew brew rvm docker iterm2 fonts colors vim-plug tpm link
 	@echo ""
-	@echo "Setup complete!"
+	@echo "Bootstrap complete!"
 	@echo ""
 	@echo "Next steps:"
-	@echo "  1. Open iTerm2 and set font:   Preferences → Profiles → Text → JetBrainsMono Nerd Font"
-	@echo "  2. Apply rose-pine color preset: Preferences → Profiles → Colors → Color Presets → rose-pine-moon"
+	@echo "  1. Open iTerm2 → Preferences → Profiles → Text → JetBrainsMono Nerd Font"
+	@echo "  2. Open iTerm2 → Preferences → Profiles → Colors → Color Presets → rose-pine-moon"
 	@echo "  3. Start tmux and press Ctrl-f I to install tmux plugins"
 	@echo "  4. Open vim — plugins install automatically on first launch"
+	@echo "  5. Open Docker Desktop and complete the first-run setup"
 
 # ─── Install + link (assumes brew deps present) ──────────────
 install: vim-plug tpm link
@@ -64,38 +68,75 @@ unlink:
 	rm -f $(HOME_DIR)/.tmux.conf
 	@echo "→ Symlinks removed."
 
-# ─── Homebrew + core packages ────────────────────────────────
-brew:
-	@echo "→ Installing Homebrew packages..."
+# ─── Homebrew (prerequisite for everything else) ─────────────
+homebrew:
+	@echo "→ Checking for Homebrew..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 	  echo "  Homebrew not found — installing..."; \
 	  /bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
+	  echo "  Homebrew installed."; \
+	  if [ -f /opt/homebrew/bin/brew ]; then \
+	    eval "$$(/opt/homebrew/bin/brew shellenv)"; \
+	  fi; \
+	else \
+	  echo "  Homebrew already installed, skipping."; \
 	fi
+
+# ─── Homebrew CLI packages ───────────────────────────────────
+brew: homebrew
+	@echo "→ Installing Homebrew packages..."
 	brew install $(BREW_PACKAGES)
+	@echo "→ Homebrew packages installed."
+
+# ─── RVM + Ruby ──────────────────────────────────────────────
+rvm:
+	@echo "→ Installing RVM..."
+	@if ! command -v rvm >/dev/null 2>&1 && [ ! -s "$(HOME_DIR)/.rvm/scripts/rvm" ]; then \
+	  curl -sSL https://get.rvm.io | bash -s stable --ruby; \
+	else \
+	  echo "  RVM already installed, skipping."; \
+	fi
+	@echo "→ RVM installed."
+	@echo "  Run: source ~/.rvm/scripts/rvm   (or open a new shell)"
+	@echo "  Then: rvm use ruby --default"
+
+# ─── Docker Desktop ──────────────────────────────────────────
+docker:
+	@echo "→ Installing Docker Desktop..."
+	@if ! [ -d "/Applications/Docker.app" ]; then \
+	  brew install --cask docker; \
+	  echo "→ Docker Desktop installed."; \
+	  echo "  Open Docker Desktop from Applications to complete first-run setup."; \
+	else \
+	  echo "  Docker Desktop already installed, skipping."; \
+	fi
 
 # ─── iTerm2 ──────────────────────────────────────────────────
 iterm2:
 	@echo "→ Installing iTerm2..."
-	brew install --cask iterm2
-	@echo "→ iTerm2 installed."
+	@if ! [ -d "/Applications/iTerm.app" ]; then \
+	  brew install --cask iterm2; \
+	  echo "→ iTerm2 installed."; \
+	else \
+	  echo "  iTerm2 already installed, skipping."; \
+	fi
 
 # ─── Nerd Fonts ──────────────────────────────────────────────
 fonts:
 	@echo "→ Installing Nerd Fonts..."
-	brew tap homebrew/cask-fonts 2>/dev/null || true
 	brew install --cask $(NERD_FONT_CASKS)
 	@echo "→ Fonts installed."
-	@echo "  Recommended: JetBrainsMono Nerd Font (matches rose-pine + Powerline)"
+	@echo "  Recommended: JetBrainsMono Nerd Font (rose-pine + Powerline)"
 
 # ─── Rose Pine color palettes ────────────────────────────────
 colors:
 	@echo "→ Installing rose-pine color palettes..."
 	@mkdir -p $(COLORS_DIR)
-	curl -fsSL $(ROSE_PINE_ITERM_URL)  -o $(COLORS_DIR)/rose-pine.itermcolors
-	curl -fsSL $(ROSE_PINE_MOON_URL)   -o $(COLORS_DIR)/rose-pine-moon.itermcolors
-	curl -fsSL $(ROSE_PINE_DAWN_URL)   -o $(COLORS_DIR)/rose-pine-dawn.itermcolors
+	curl -fsSL $(ROSE_PINE_ITERM_URL) -o $(COLORS_DIR)/rose-pine.itermcolors
+	curl -fsSL $(ROSE_PINE_MOON_URL)  -o $(COLORS_DIR)/rose-pine-moon.itermcolors
+	curl -fsSL $(ROSE_PINE_DAWN_URL)  -o $(COLORS_DIR)/rose-pine-dawn.itermcolors
 	@echo "→ Rose Pine palettes saved to ~/Library/Application Support/iTerm2/ColorPresets"
-	@echo "  In iTerm2: Preferences → Profiles → Colors → Color Presets → rose-pine-moon"
+	@echo "  iTerm2 → Preferences → Profiles → Colors → Color Presets → rose-pine-moon"
 
 # ─── Vim-plug + plugins ──────────────────────────────────────
 vim-plug:

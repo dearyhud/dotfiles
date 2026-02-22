@@ -20,26 +20,32 @@ make setup
 
 `make setup` runs the full bootstrap in order:
 
-1. **brew** — installs Homebrew (if missing) + `vim`, `tmux`, `fzf`, `ripgrep`, `bat`, `fd`
-2. **iterm2** — installs iTerm2 via Homebrew cask
-3. **fonts** — installs Nerd Fonts: JetBrainsMono, Fira Code, Hack, MesloLG
-4. **colors** — downloads all three rose-pine palettes (main, moon, dawn) into iTerm2
-5. **vim-plug** — installs vim-plug and runs `:PlugInstall` headlessly
-6. **tpm** — clones tpm + tmux-powerline to `~/.tmux/plugins/`
-7. **link** — symlinks `.vimrc` and `.tmux.conf` into `$HOME`
+1. **homebrew** — installs Homebrew itself (prerequisite for everything)
+2. **brew** — installs `vim`, `tmux`, `fzf`, `ripgrep`, `bat`, `fd`
+3. **rvm** — installs RVM + latest stable Ruby
+4. **docker** — installs Docker Desktop (skips if already present)
+5. **iterm2** — installs iTerm2 (skips if already present)
+6. **fonts** — installs Nerd Fonts: JetBrainsMono, Fira Code, Hack, MesloLG
+7. **colors** — downloads all three rose-pine palettes (main, moon, dawn) into iTerm2
+8. **vim-plug** — installs vim-plug and runs `:PlugInstall` headlessly
+9. **tpm** — clones tpm + tmux-powerline to `~/.tmux/plugins/`
+10. **link** — symlinks `.vimrc` and `.tmux.conf` into `$HOME`
 
 ## Individual targets
 
 ```sh
-make install     # vim-plug + tpm + symlinks only (deps already present)
-make link        # Symlink dotfiles only (safe to re-run)
-make unlink      # Remove symlinks
-make brew        # Homebrew CLI packages only
-make iterm2      # iTerm2 only
-make fonts       # All Nerd Fonts only
-make colors      # rose-pine iTerm2 palettes only
-make vim-plug    # vim-plug + plugins only
-make tpm         # tpm + tmux-powerline only
+make install      # vim-plug + tpm + symlinks only (deps already present)
+make link         # Symlink dotfiles only (safe to re-run)
+make unlink       # Remove symlinks
+make homebrew     # Install Homebrew only
+make brew         # Homebrew CLI packages only
+make rvm          # RVM + latest stable Ruby
+make docker       # Docker Desktop only
+make iterm2       # iTerm2 only
+make fonts        # All Nerd Fonts only
+make colors       # rose-pine iTerm2 palettes only
+make vim-plug     # vim-plug + plugins only
+make tpm          # tpm + tmux-powerline only
 ```
 
 ## Post-install steps
@@ -48,6 +54,8 @@ make tpm         # tpm + tmux-powerline only
 2. **iTerm2 color** — Preferences → Profiles → Colors → Color Presets → `rose-pine-moon`
 3. **tmux plugins** — inside a tmux session press `Ctrl-f I` to activate plugins
 4. **Vim** — opens with rose-pine moon automatically; plugins installed headlessly by `make setup`
+5. **Docker Desktop** — open from Applications to complete first-run setup
+6. **RVM** — run `source ~/.rvm/scripts/rvm` or open a new shell, then `rvm use ruby --default`
 
 ## Vim keybindings (leader = `Space`)
 
