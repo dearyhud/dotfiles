@@ -37,11 +37,11 @@ ROSE_PINE_MOON_URL  := https://raw.githubusercontent.com/rose-pine/iterm/refs/he
 ROSE_PINE_DAWN_URL  := https://raw.githubusercontent.com/rose-pine/iterm/refs/heads/main/rose-pine-dawn.itermcolors
 COLORS_DIR          := $(HOME_DIR)/Library/Application\ Support/iTerm2/ColorPresets
 
-.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors claude-agents
+.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors claude-agents gemini
 
 # ─── Full machine bootstrap ──────────────────────────────────
 # homebrew must run first — everything else depends on it
-setup: homebrew brew docker iterm2 fonts colors vim-plug tpm link claude-agents
+setup: homebrew brew docker iterm2 fonts colors vim-plug tpm link gemini
 	@echo ""
 	@echo "Bootstrap complete!"
 	@echo ""
@@ -54,7 +54,7 @@ setup: homebrew brew docker iterm2 fonts colors vim-plug tpm link claude-agents
 	@echo "  6. In any Claude session: /agents architect (or planner, engineer, reviewer, tester, debugger, sre)"
 
 # ─── Install + link (assumes brew deps present) ──────────────
-install: vim-plug tpm link
+install: vim-plug tpm link gemini
 	@echo "Install complete. Run 'make setup' on a fresh machine."
 
 # ─── Symlinks ────────────────────────────────────────────────
@@ -181,3 +181,12 @@ tpm:
 	   $(HOME_DIR)/.tmux/plugins/tmux-powerline/lib/headers.sh
 	@echo "→ tpm + tmux-powerline installed and configured."
 	@echo "  Inside tmux press Ctrl-f I to activate all plugins."
+
+# ─── Gemini CLI ──────────────────────────────────────────────
+gemini:
+	@echo "→ Installing Gemini CLI..."
+	@if ! command -v gemini >/dev/null 2>&1; then \
+	  npm install -g @google/gemini-cli; \
+	else \
+	  echo "  Gemini CLI already installed, skipping."; \
+	fi
