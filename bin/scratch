@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+
+DB="$HOME/.scratches.db"
+
+# ---------------------------------------------------------------------------
+# Bootstrap DB
+# ---------------------------------------------------------------------------
+sqlite3 "$DB" <<'SQL'
+CREATE TABLE IF NOT EXISTS scratches (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT    NOT NULL UNIQUE,
+  content    TEXT    NOT NULL DEFAULT '',
+  created_at TEXT    NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+SQL
+
+# ---------------------------------------------------------------------------
+# Dependency check
+# ---------------------------------------------------------------------------
+if ! command -v fzf &>/dev/null; then
+  echo "Error: 'fzf' is required but not installed." >&2
+  echo "  macOS:  brew install fzf" >&2
+  echo "  Linux:  apt install fzf  |  dnf install fzf" >&2
+  exit 1
+fi
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+usage() {
+  cat <<EOF
+scratch - SQLite-backed scratch note manager
+
+Usage:
+  scratch new [name]   Create a new scratch and open in vim
+  scratch list         List all scratches
+  scratch edit         Select a scratch to edit
+  scratch delete       Select a scratch to delete
+  scratch help         Show this help
+  scratch              Interactive menu
+EOF
+}
+
+# Write content from a temp file back into the DB safely.
+save_to_db() {
+  local name="$1"
+  local tmpfile="$2"
+
+  if command -v python3 &>/dev/null; then
+    python3 - "$DB" "$name" "$tmpfile" <<'PYEOF'
+import sqlite3, sys
+db_path, name, tmpfile = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(tmpfile, "r") as f:
+    content = f.read()
+con = sqlite3.connect(db_path)
+con.execute(
+    "UPDATE scratches SET content=?, updated_at=datetime('now') WHERE name=?",
+    (content, name)
+)
+con.commit()
+con.close()
+PYEOF
+  else
+    local content escaped
+    content=$(cat "$tmpfile")
+    escaped="${content//\'/\'\'}"
+    sqlite3 "$DB" "UPDATE scratches SET content='$escaped', updated_at=datetime('now') WHERE name='$name';"
+  fi
+}
+
+# Load content from DB into a temp file, open vim, save back
+open_in_vim() {
+  local name="$1"
+  local tmp
+  tmp=$(mktemp /tmp/scratch_XXXXXX.md)
+
+  sqlite3 "$DB" "SELECT content FROM scratches WHERE name='$name';" > "$tmp"
+  vim "$tmp"
+  save_to_db "$name" "$tmp"
+  rm -f "$tmp"
+  echo "Saved '$name'."
+}
+
+# Returns 0 if name exists in DB
+name_exists() {
+  local count
+  count=$(sqlite3 "$DB" "SELECT COUNT(*) FROM scratches WHERE name='$1';")
+  [[ "$count" -gt 0 ]]
+}
+
+# fzf picker — shows name + last updated, returns just the name
+pick_scratch() {
+  local prompt="$1"
+  local result
+
+  result=$(sqlite3 "$DB" \
+    "SELECT printf('%-25s  updated: %s', name, updated_at) FROM scratches ORDER BY updated_at DESC;" \
+    | fzf --prompt="$prompt " \
+          --height=40% \
+          --border=rounded \
+          --no-sort \
+          --ansi)
+
+  if [[ -z "$result" ]]; then
+    return 1  # user pressed Esc / ctrl-c
+  fi
+
+  # Extract just the name (first field)
+  echo "$result" | awk '{print $1}'
+}
+
+# fzf menu for the main interactive mode
+pick_action() {
+  printf '%s\n' "New scratch" "List scratches" "Edit scratch" "Delete scratch" "Quit" \
+    | fzf --prompt="What would you like to do? " \
+          --height=40% \
+          --border=rounded \
+          --no-sort \
+          --ansi
+}
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+cmd_new() {
+  local name="$1"
+  if [[ -z "$name" ]]; then
+    read -rp "Scratch name: " name
+  fi
+  if [[ -z "$name" ]]; then
+    echo "Error: a name is required." >&2
+    exit 1
+  fi
+  name="${name// /_}"
+
+  if name_exists "$name"; then
+    echo "Scratch '$name' already exists — opening for editing."
+  else
+    sqlite3 "$DB" "INSERT INTO scratches (name) VALUES ('$name');"
+    echo "Created '$name'."
+  fi
+
+  open_in_vim "$name"
+}
+
+cmd_list() {
+  local rows
+  rows=$(sqlite3 "$DB" \
+    "SELECT printf('%-4d  %-25s  %s', id, name, updated_at) FROM scratches ORDER BY updated_at DESC;")
+
+  if [[ -z "$rows" ]]; then
+    echo "No scratches yet. Run: scratch new"
+  else
+    printf "%-4s  %-25s  %s\n" "ID" "NAME" "LAST UPDATED"
+    printf '%.0s-' {1..52}; echo
+    echo "$rows"
+  fi
+}
+
+cmd_edit() {
+  local name
+  name=$(pick_scratch "Edit scratch:") || { echo "Cancelled."; return; }
+  open_in_vim "$name"
+}
+
+cmd_delete() {
+  local name
+  name=$(pick_scratch "Delete scratch:") || { echo "Cancelled."; return; }
+  read -rp "Delete '$name'? [y/N] " confirm
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    sqlite3 "$DB" "DELETE FROM scratches WHERE name='$name';"
+    echo "Deleted '$name'."
+  else
+    echo "Cancelled."
+  fi
+}
+
+cmd_interactive() {
+  local action
+  action=$(pick_action) || exit 0
+
+  case "$action" in
+    "New scratch")    read -rp "Scratch name: " n; cmd_new "$n" ;;
+    "List scratches") cmd_list ;;
+    "Edit scratch")   cmd_edit ;;
+    "Delete scratch") cmd_delete ;;
+    "Quit")           exit 0 ;;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Entrypoint
+# ---------------------------------------------------------------------------
+case "${1:-}" in
+  new)              cmd_new "$2" ;;
+  list)             cmd_list ;;
+  edit)             cmd_edit ;;
+  delete)           cmd_delete ;;
+  help|--help|-h)   usage ;;
+  "")               cmd_interactive ;;
+  *)
+    echo "Unknown command: $1" >&2
+    usage
+    exit 1
+    ;;
+esac
