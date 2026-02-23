@@ -32,16 +32,16 @@ NERD_FONT_CASKS := \
   font-meslo-lg-nerd-font
 
 # Rose Pine iTerm2 color presets
-ROSE_PINE_ITERM_URL := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine.itermcolors
-ROSE_PINE_MOON_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-moon.itermcolors
-ROSE_PINE_DAWN_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-dawn.itermcolors
+ROSE_PINE_ITERM_URL := https://raw.githubusercontent.com/rose-pine/iterm/refs/heads/main/rose-pine.itermcolors 
+ROSE_PINE_MOON_URL  := https://raw.githubusercontent.com/rose-pine/iterm/refs/heads/main/rose-pine-moon.itermcolors
+ROSE_PINE_DAWN_URL  := https://raw.githubusercontent.com/rose-pine/iterm/refs/heads/main/rose-pine-dawn.itermcolors
 COLORS_DIR          := $(HOME_DIR)/Library/Application\ Support/iTerm2/ColorPresets
 
 .PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors claude-agents
 
 # ─── Full machine bootstrap ──────────────────────────────────
 # homebrew must run first — everything else depends on it
-setup: homebrew brew rvm docker iterm2 fonts colors vim-plug tpm link claude-agents
+setup: homebrew brew docker iterm2 fonts colors vim-plug tpm link claude-agents
 	@echo ""
 	@echo "Bootstrap complete!"
 	@echo ""
