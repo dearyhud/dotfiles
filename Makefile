@@ -6,6 +6,7 @@
 #    make install       — Symlinks + plugins (assumes deps already present)
 #    make link          — Symlink dotfiles only
 #    make unlink        — Remove symlinks
+#    make claude-agents — Install Claude agent definitions to ~/.claude/agents/
 #    make homebrew      — Install Homebrew itself (run this first on fresh machine)
 #    make brew          — Install Homebrew CLI packages (vim, tmux, etc.)
 #    make rvm           — Install RVM + latest stable Ruby
@@ -36,11 +37,11 @@ ROSE_PINE_MOON_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/di
 ROSE_PINE_DAWN_URL  := https://raw.githubusercontent.com/rose-pine/iterm/main/dist/rose-pine-dawn.itermcolors
 COLORS_DIR          := $(HOME_DIR)/Library/Application\ Support/iTerm2/ColorPresets
 
-.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors
+.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors claude-agents
 
 # ─── Full machine bootstrap ──────────────────────────────────
 # homebrew must run first — everything else depends on it
-setup: homebrew brew rvm docker iterm2 fonts colors vim-plug tpm link
+setup: homebrew brew rvm docker iterm2 fonts colors vim-plug tpm link claude-agents
 	@echo ""
 	@echo "Bootstrap complete!"
 	@echo ""
@@ -50,6 +51,7 @@ setup: homebrew brew rvm docker iterm2 fonts colors vim-plug tpm link
 	@echo "  3. Start tmux and press Ctrl-f I to install tmux plugins"
 	@echo "  4. Open vim — plugins install automatically on first launch"
 	@echo "  5. Open Docker Desktop and complete the first-run setup"
+	@echo "  6. In any Claude session: /agents architect (or planner, engineer, reviewer, tester, debugger, sre)"
 
 # ─── Install + link (assumes brew deps present) ──────────────
 install: vim-plug tpm link
@@ -150,6 +152,13 @@ vim-plug:
 	@echo "→ Installing vim plugins (headless)..."
 	vim -E -s -u $(HOME_DIR)/.vimrc +PlugInstall +qall || true
 	@echo "→ Vim plugins installed."
+
+# ─── Claude agent definitions ────────────────────────────────
+claude-agents:
+	@echo "→ Installing Claude agent definitions..."
+	@$(MAKE) -C $(DOTFILES_DIR)/prompts/agents install
+	@echo "→ Claude agents installed."
+	@echo "  In any Claude session: /agents <name>"
 
 # ─── TPM (Tmux Plugin Manager) + tmux-powerline ──────────────
 tpm:
