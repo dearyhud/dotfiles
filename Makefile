@@ -16,13 +16,16 @@
 #    make tpm           — Install tpm + tmux-powerline + apply custom theme/config
 #    make fonts         — Install all Nerd Fonts
 #    make colors        — Install rose-pine palettes for iTerm2
+#    make local-setup   — Install mkcert + generate local HTTPS certs
+#    make local-up      — Start local HTTPS proxy (nginx via docker)
+#    make local-down    — Stop local HTTPS proxy
 # ============================================================
 
 DOTFILES_DIR := $(shell pwd)
 HOME_DIR     := $(HOME)
 
 # CLI tools
-BREW_PACKAGES := vim tmux fzf ripgrep bat fd reattach-to-user-namespace
+BREW_PACKAGES := vim tmux fzf ripgrep bat fd reattach-to-user-namespace zsh-autosuggestions zsh-completions
 
 # Nerd Fonts
 NERD_FONT_CASKS := \
@@ -37,7 +40,7 @@ ROSE_PINE_MOON_URL  := https://raw.githubusercontent.com/rose-pine/iterm/refs/he
 ROSE_PINE_DAWN_URL  := https://raw.githubusercontent.com/rose-pine/iterm/refs/heads/main/rose-pine-dawn.itermcolors
 COLORS_DIR          := $(HOME_DIR)/Library/Application\ Support/iTerm2/ColorPresets
 
-.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors claude-agents gemini
+.PHONY: setup install link unlink homebrew brew rvm docker iterm2 vim-plug tpm fonts colors claude-agents gemini local-setup local-up local-down
 
 # ─── Full machine bootstrap ──────────────────────────────────
 # homebrew must run first — everything else depends on it
@@ -62,12 +65,14 @@ link:
 	@echo "→ Linking dotfiles..."
 	ln -sf $(DOTFILES_DIR)/.vimrc        $(HOME_DIR)/.vimrc
 	ln -sf $(DOTFILES_DIR)/.tmux.conf    $(HOME_DIR)/.tmux.conf
+	ln -sf $(DOTFILES_DIR)/.zshrc        $(HOME_DIR)/.zshrc
 	@echo "→ Dotfiles linked."
 
 unlink:
 	@echo "→ Removing dotfile symlinks..."
 	rm -f $(HOME_DIR)/.vimrc
 	rm -f $(HOME_DIR)/.tmux.conf
+	rm -f $(HOME_DIR)/.zshrc
 	@echo "→ Symlinks removed."
 
 # ─── Homebrew (prerequisite for everything else) ─────────────
@@ -181,6 +186,21 @@ tpm:
 	   $(HOME_DIR)/.tmux/plugins/tmux-powerline/lib/headers.sh
 	@echo "→ tpm + tmux-powerline installed and configured."
 	@echo "  Inside tmux press Ctrl-f I to activate all plugins."
+
+# ─── Local HTTPS dev (nginx + mkcert + docker) ──────────────
+local-setup:
+	@echo "→ Setting up local HTTPS dev environment..."
+	@$(DOTFILES_DIR)/local-dev/setup.sh
+
+local-up: local-setup
+	@echo "→ Starting local HTTPS proxy..."
+	docker compose -f $(DOTFILES_DIR)/local-dev/docker-compose.yml up -d
+	@echo "→ Running at https://localhost and https://local.dev"
+	@echo "  Proxying to http://localhost:3000"
+
+local-down:
+	@echo "→ Stopping local HTTPS proxy..."
+	docker compose -f $(DOTFILES_DIR)/local-dev/docker-compose.yml down
 
 # ─── Gemini CLI ──────────────────────────────────────────────
 gemini:
