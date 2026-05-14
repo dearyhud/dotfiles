@@ -16,6 +16,7 @@ alias bp_commit='npm run prettier:fix && git add . && git commit -m'
 alias git_pristine='git branch | ag -v "main" | xargs git branch -D'
 alias mono_pr_diffs="sh ~/sites/commits.sh"
 alias vf='vim $(fzf)'
+alias claudemax="claude --dangerously-skip-permissions"
 
 alias new_session_token='sh ~/sites/backpack/backpack-infra/scripts/aws-session-token.sh deary $(op item get "AWS|Backpack" --otp)'
 
@@ -156,3 +157,11 @@ case ":$PATH:" in
   *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 # pnpm end
+
+# bun completions
+[ -s "/Users/dearyhudsoniii/.bun/_bun" ] && source "/Users/dearyhudsoniii/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+export PATH="/opt/homebrew/bin:$PATH"

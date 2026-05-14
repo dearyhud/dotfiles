@@ -36,9 +36,14 @@ call plug#begin('~/.vim/plugged')
 
   " Git integration
   Plug 'tpope/vim-fugitive'
+  Plug 'tpope/vim-rhubarb'
 
   " Terraform syntax
   Plug 'hashivim/vim-terraform'
+
+  " Ruby
+  Plug 'vim-ruby/vim-ruby'
+  Plug 'tpope/vim-rails'
 
   " Sparkup (zen-coding for HTML)
   Plug 'rstacruz/sparkup', {'rtp': 'vim/'}
@@ -231,15 +236,6 @@ highlight LineNr     guifg=#3b3a52
 highlight CursorLine guibg=#2a2a3e
 
 " ────────────────────────────────────────────────────────────
-" "  RUBY
-" " ────────────────────────────────────────────────────────────
-" " Enhanced Ruby syntax highlighting
-Plug 'vim-ruby/vim-ruby'
-"
-" " Rails-specific extras (optional but great if you use Rails)
-Plug 'tpope/vim-rails'
-
-" ────────────────────────────────────────────────────────────
 "  FOLDING (Ruby methods/classes)
 " ────────────────────────────────────────────────────────────
 set foldmethod=syntax       " Fold based on syntax
@@ -248,6 +244,7 @@ set foldnestmax=3           " Don't fold more than 3 levels deep
 
 " Only enable folding for Ruby files
 autocmd FileType ruby setlocal foldmethod=syntax
+autocmd VimEnter * NERDTree | wincmd p
 
 " Handy fold keybindings
 " za  → toggle fold under cursor
